@@ -218,8 +218,9 @@ def check_source_grounding(document_text, extracted_data):
             numeric_section = ""
 
         numeric_tokens = re.findall(
-            NUMBER_PATTERN,
-            numeric_section
+            rf"(?<![\w.])(?:N/A|N\.A\.|NULL|NONE|{NUMBER_PATTERN})(?![\w.])",
+            numeric_section,
+            flags=re.IGNORECASE
         )
 
         has_price_fields = (

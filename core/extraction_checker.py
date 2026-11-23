@@ -5,8 +5,13 @@ from decimal import Decimal, InvalidOperation
 from core.column_layout import detect_column_order
 
 
+NUMBER_PATTERN = r"-?\d[\d,]*(?:\.\d+)?"
+MISSING_PATTERN = r"N/A|N\.A\.|NULL|NONE"
+VALUE_PATTERN = rf"(?:{MISSING_PATTERN}|{NUMBER_PATTERN})"
+
+
 def normalize_number(value):
-    """Convert formatted numeric values into comparable decimals."""
+    """Convert numeric values into comparable decimals."""
     if value is None or isinstance(value, bool):
         return None
 
@@ -14,6 +19,15 @@ def normalize_number(value):
         return Decimal(str(value).replace(",", "").strip())
     except (InvalidOperation, ValueError, TypeError):
         return None
+
+
+def is_missing_value(value):
+    if value is None:
+        return True
+
+    return str(value).strip().upper() in {
+        "N/A", "N.A.", "NULL", "NONE"
+    }
 
 
 def check_extraction(document_text, extracted_data):
@@ -31,7 +45,6 @@ def check_extraction(document_text, extracted_data):
         None
     )
 
-    # Detect the numeric column order from table headers.
     column_order = detect_column_order(
         document_text,
         first_item_code
@@ -42,7 +55,6 @@ def check_extraction(document_text, extracted_data):
             "Document column layout could not be identified reliably."
         )
 
-    # Validate document number.
     doc_number = extracted_data.get("document_number")
 
     if not doc_number or str(doc_number) not in text:
@@ -71,12 +83,11 @@ def check_extraction(document_text, extracted_data):
             f"Incorrect document number for {doc_type}: {doc_number}"
         )
 
-    # Validate product rows using the detected column order.
-    number_pattern = r"-?\d[\d,]*(?:\.\d+)?"
-
     for item in items:
         code = str(item.get("item_code") or "").strip()
-        description = str(item.get("description") or "").strip()
+        description = str(
+            item.get("description") or ""
+        ).strip()
 
         if not code or not re.search(
             rf"(?<!\w){re.escape(code)}(?!\w)",
@@ -92,7 +103,6 @@ def check_extraction(document_text, extracted_data):
             )
             continue
 
-        # Never approve numeric values without a known layout.
         if column_order is None:
             continue
 
@@ -100,10 +110,10 @@ def check_extraction(document_text, extracted_data):
             rf"(?<!\w){re.escape(code)}(?!\w)"
             rf"\s+{re.escape(description)}"
             + "".join(
-                rf"\s+({number_pattern})"
+                rf"\s+({VALUE_PATTERN})"
                 for _ in column_order
             )
-            + rf"(?=\s|$)",
+            + r"(?=\s|$)",
             re.IGNORECASE
         )
 
@@ -115,26 +125,36 @@ def check_extraction(document_text, extracted_data):
             )
             continue
 
-        for position, field in enumerate(column_order, start=1):
-            extracted_value = normalize_number(item.get(field))
-            pdf_value = normalize_number(match.group(position))
+        for position, field in enumerate(
+            column_order, start=1
+        ):
+            extracted_value = item.get(field)
+            pdf_value = match.group(position)
 
-            if (
-                extracted_value is None
-                or pdf_value != extracted_value
-            ):
+            if is_missing_value(pdf_value):
+                valid = is_missing_value(extracted_value)
+            else:
+                valid = (
+                    normalize_number(extracted_value)
+                    is not None
+                    and normalize_number(extracted_value)
+                    == normalize_number(pdf_value)
+                )
+
+            if not valid:
                 errors.append(
                     f"Product details do not match PDF: {code}"
                 )
                 break
 
-    # Detect duplicate product codes.
     codes = [
         str(item.get("item_code") or "").strip().lower()
         for item in items
     ]
 
     if len(codes) != len(set(codes)):
-        errors.append("Repeated item codes require review")
+        errors.append(
+            "Repeated item codes require review"
+        )
 
     return errors

@@ -212,6 +212,7 @@ if st.button("Verify Documents", type="primary"):
                 except ValueError as error:
                     st.error(f"Document Verification Failed: {error}")
                     st.stop()
+
                 invoice_number = invoice_data.get(
                     "document_number"
                 )
@@ -250,9 +251,21 @@ if st.button("Verify Documents", type="primary"):
                     for item in verification_results
                 )
 
-                total_financial_difference = sum(
-                    item["financial_difference"] or 0
+                # Calculate differences only where values exist.
+                # Missing values must not be mistaken for zero.
+                calculable_differences = [
+                    item["financial_difference"]
                     for item in verification_results
+                    if item["financial_difference"] is not None
+                ]
+
+                total_financial_difference = sum(
+                    calculable_differences
+                )
+
+                unavailable_difference_count = (
+                    len(verification_results)
+                    - len(calculable_differences)
                 )
 
                 st.subheader("Verification Summary")
@@ -271,9 +284,18 @@ if st.button("Verify Documents", type="primary"):
                 )
 
                 col5.metric(
-                    "Net Financial Difference",
+                    "Net Financial Difference (Calculable Items)",
                     f"₹{total_financial_difference:,.2f}"
+                    if calculable_differences else "N/A"
                 )
+
+                if unavailable_difference_count > 0:
+                    st.warning(
+                        f"Financial difference unavailable for "
+                        f"{unavailable_difference_count} product(s). "
+                        "The net financial difference includes only "
+                        "products with calculable values."
+                    )
 
                 if mismatched_items == 0:
                     st.success("Verification Passed")
@@ -328,10 +350,11 @@ if st.button("Verify Documents", type="primary"):
                         {
                             "Product": item["item_code"],
                             "Financial Difference": (
-                                item["financial_difference"] or 0
+                                item["financial_difference"]
                             )
                         }
                         for item in verification_results
+                        if item["financial_difference"] is not None
                     ])
 
                     if not chart_data.empty:
@@ -341,7 +364,7 @@ if st.button("Verify Documents", type="primary"):
                         )
                     else:
                         st.info(
-                            "No financial data available."
+                            "No calculable financial differences available."
                         )
 
                 # ---------------------------------
