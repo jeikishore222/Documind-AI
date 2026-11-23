@@ -1,4 +1,7 @@
 # DocuMind AI
+## Application Screenshot
+
+![DocuMind AI Dashboard](screenshots/dashboard.png)
 
 **AI-Powered Procurement Document Verification System**
 
