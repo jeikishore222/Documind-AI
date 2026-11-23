@@ -40,3 +40,5 @@ Thumbs.db
 
 # Keep dependency configuration
 !requirements.txt
+
+core/source_grounding_backup.py
