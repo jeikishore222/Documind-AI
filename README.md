@@ -235,3 +235,27 @@ The project has passed 34 automated tests and completed end-to-end validation on
 **Jeikishore K**
 
 GitHub: https://github.com/jeikishore222
+
+
+## Project Screenshots
+
+### Application Dashboard
+![DocuMind AI Dashboard](screenshots/dashboard.png)
+
+### Verification Analytics
+![Verification Analytics](screenshots/verification_analytics.png)
+
+### Product Verification Results
+![Verification Results](screenshots/verification_results.png)
+
+### Financial Discrepancy Analysis
+![Financial Analysis](screenshots/financial_analysis.png)
+
+### Verification History
+![Verification History](screenshots/verification_history.png)
+
+## Video Demonstration
+
+Watch the complete DocuMind AI workflow:
+
+[Watch the Project Demo](PASTE_YOUR_GITHUB_MP4_LINK_HERE)
