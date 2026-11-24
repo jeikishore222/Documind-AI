@@ -258,4 +258,7 @@ GitHub: https://github.com/jeikishore222
 
 Watch the complete DocuMind AI workflow:
 
-[Watch the Project Demo](DocuMind.AI.-.Profile.1.-.Microsoft.Edge.2026-11-24.12-32-05.mp4)
+https://github.com/user-attachments/assets/cf542b25-8b1d-44e8-9305-3c701c3b2632
+
+
+
